@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>תיאום ציפיות — עובד/ת סיעוד</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>body{margin:0;background:#fff}</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+const { useState, useContext, createContext } = React;
+
+const FormCtx = createContext(null);
+
+/* ─── GLOBAL STYLES ─── */
+const STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-family: 'Heebo', sans-serif; background: #fff; color: #111; direction: rtl; font-size: 16px; }
+
+  /* ── FORM ── */
+  .wrap { max-width: 800px; margin: 0 auto; padding: 48px 28px 100px; }
+  .main-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.1; }
+  .main-sub { font-size: 15px; font-weight: 300; color: #777; margin-top: 4px; padding-bottom: 20px; border-bottom: 1.5px solid #111; margin-bottom: 52px; }
+  
+  .sec { margin-bottom: 56px; }
+  .sec-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+    color: #111; padding-bottom: 10px; border-bottom: 1px solid #ddd; margin-bottom: 28px;
+  }
+  .sec-num { color: #bbb; margin-left: 6px; }
+  
+  .fg { margin-bottom: 22px; }
+  .fg label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 7px; color: #444; }
+  .fg .hint { font-size: 12px; color: #aaa; margin-bottom: 6px; font-weight: 400; }
+  
+  input[type="text"], input[type="date"], select {
+    width: 100%; border: none; border-bottom: 1px solid #ccc;
+    padding: 9px 0; font-family: 'Heebo', sans-serif; font-size: 15px;
+    background: transparent; outline: none; color: #111; direction: rtl;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-bottom-color: #111; }
+  select { cursor: pointer; }
+  textarea {
+    width: 100%; border: 1px solid #ccc; padding: 12px; font-family: 'Heebo', sans-serif;
+    font-size: 15px; background: #fafafa; outline: none; color: #111; direction: rtl;
+    resize: vertical; min-height: 80px; transition: border-color 0.15s; border-radius: 1px;
+  }
+  textarea:focus { border-color: #111; background: #fff; }
+  
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  
+  .radios { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 6px; }
+  .radios label { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 400; color: #333; cursor: pointer; margin-bottom: 0; }
+  input[type="radio"], input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #111; }
+  
+  .task-table { width: 100%; border-collapse: collapse; }
+  .task-table th { font-size: 12px; font-weight: 600; text-align: right; padding: 9px 14px; background: #f5f5f5; border-bottom: 1px solid #ddd; color: #333; }
+  .task-table td { padding: 8px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+  .task-table td:first-child { font-weight: 500; width: 30%; }
+  .task-table td input[type="text"] { font-size: 14px; padding: 5px 0; }
+  .task-table td select { font-size: 14px; padding: 5px 0; }
+  
+  .alert {
+    border: 1.5px solid #111; padding: 18px 22px; margin: 12px 0 20px;
+    background: #fff;
+  }
+  .alert p { font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
+  .alert p:last-child { margin-bottom: 0; }
+  .alert strong { font-weight: 700; }
+  
+  .ack-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-top: 1px solid #eee; }
+  .ack-row input { margin-top: 3px; flex-shrink: 0; }
+  .ack-row span { font-size: 13px; line-height: 1.6; }
+  
+  .btn { 
+    background: #111; color: #fff; border: none; padding: 15px 44px;
+    font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.3px; display: inline-block;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #333; }
+  .btn:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-out { background: #fff; color: #111; border: 1.5px solid #111; padding: 13px 36px; font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; margin-right: 12px; }
+  .btn-out:hover { background: #f5f5f5; }
+  
+  .lang-select-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; padding: 20px 24px; background: #f8f8f8; }
+  .lang-select-wrap label { font-size: 13px; font-weight: 600; margin-bottom: 0; }
+  .lang-select-wrap select { border: 1px solid #ccc; padding: 8px 12px; width: auto; flex: 1; }
+  
+  .loading { text-align: center; padding: 80px 0; font-size: 14px; color: #666; }
+  .loading::after { content: ''; display: block; width: 30px; height: 30px; border: 2px solid #ddd; border-top-color: #111; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 20px auto 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* ── REPORT ── */
+  .rpt { max-width: 800px; margin: 0 auto; padding: 40px 28px; direction: rtl; }
+  .rpt-hdr { text-align: center; padding-bottom: 20px; margin-bottom: 36px; border-bottom: 2px solid #111; }
+  .rpt-hdr-title { font-size: 24px; font-weight: 700; }
+  .rpt-hdr-sub { font-size: 14px; color: #777; margin-top: 5px; }
+  .rpt-meta { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-top: 10px; }
+  
+  .rpt-sec { margin-bottom: 36px; page-break-inside: avoid; }
+  .rpt-sec-title { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #bbb; margin-bottom: 18px; color: #333; }
+  
+  .bi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; page-break-inside: avoid; }
+  .bi-he { direction: rtl; }
+  .bi-tr { direction: ltr; text-align: left; }
+  .bi-lbl { font-size: 11px; color: #999; margin-bottom: 3px; }
+  .bi-val { font-size: 14px; line-height: 1.5; }
+  .bi-val.empty { color: #bbb; font-style: italic; font-size: 12px; }
+  
+  .rpt-clause { border: 1px solid #111; padding: 16px 20px; margin: 12px 0; page-break-inside: avoid; }
+  .rpt-clause p { font-size: 12px; line-height: 1.7; }
+  
+  .sig-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; page-break-inside: avoid; }
+  .sig-box { border: 1px solid #ccc; padding: 22px 18px; }
+  .sig-box-title { font-size: 11px; font-weight: 700; margin-bottom: 32px; }
+  .sig-line { border-bottom: 1px solid #888; margin-top: 40px; }
+  .sig-label { font-size: 10px; color: #888; margin-top: 4px; }
+  
+  .col-hdr { font-size: 10px; font-weight: 700; color: #999; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 12px; }
+  .col-hdr.ltr { direction: ltr; text-align: left; }
+  
+  @media print {
+    .no-print { display: none !important; }
+    .print-hide { display: none !important; }
+    html, body { direction: rtl; background: #fff; }
+    .rpt { padding: 0; max-width: 100%; display: block !important; }
+    @page { size: A4 portrait; margin: 15mm 18mm; }
+    .rpt-sec { page-break-inside: avoid; }
+    .bi-row { page-break-inside: avoid; }
+    .sig-wrap { page-break-inside: avoid; }
+  }
+`;
+
+const TASKS = [
+  { key: "bathing",      he: "רחצה / קנוח" },
+  { key: "diaper",       he: "החלפת חיתול / מוצרי ספיגה" },
+  { key: "medication",   he: "מתן תרופות" },
+  { key: "mobility",     he: "ניוד / שימוש במנוף" },
+  { key: "doctor",       he: "ליווי לרופא / בדיקות" },
+  { key: "physio",       he: "פיזיותרפיה ביתית" },
+  { key: "pressure",     he: "מניעת פצעי לחץ" },
+  { key: "feeding",      he: "האכלה" },
+];
+
+const MEALS = [
+  { key: "breakfast", he: "ארוחת בוקר" },
+  { key: "lunch",     he: "ארוחת צהריים" },
+  { key: "dinner",    he: "ארוחת ערב" },
+  { key: "snack",     he: "ארוחת לילה / נשנוש" },
+];
+
+const LANGS = { en: "English", uz: "Oʻzbekcha (Uzbek)", hi: "हिन्दी (Hindi)" };
+
+const EMPTY_FORM = {
+  // 0
+  patientName: "", patientAge: "", workerName: "", workerOrigin: "", agency: "", startDate: "",
+  // 1
+  patientStory: "", patientImportant: "", patientMood: "",
+  workerBackground: "", workerExpectations: "",
+  // 2
+  tasks: TASKS.reduce((acc, t) => ({ ...acc, [t.key]: { included: "", notes: "" } }), {}),
+  notExpected: "",
+  // 3
+  meals: MEALS.reduce((acc, m) => ({ ...acc, [m.key]: "" }), {}),
+  whoCooks: "", workerCooksForSelf: "", forbiddenFood: "",
+  whoShops: "", shoppingPayment: "", workerShopsAlone: "", patientDuringShop: "", receiptRequired: "",
+  // 3b
+  nightWatch: "", minSleepHours: "", sleepFrom: "", sleepTo: "",
+  nightReplacement: "", nightCallMethod: "", nightCompensation: "", nightCompDetails: "",
+  // 4
+  phonePolicy: "", phoneForbiddenWhen: "",
+  smoking: "", smokingArea: "",
+  guests: "",
+  kosher: "", kosherDetails: "",
+  abandonmentAck: false,
+  // 5
+  salary: "", payDay: "", pocketMoney: "", pocketMoneyType: "", restDay: "",
+  leaveNotice: "", leaveChannel: "", sickNotice: "", dailyRest: "",
+  terminationAck: false, holidaysSelected: "", holidaysAck: false,
+  // 6
+  fallProtocol: "", refusalProtocol: "", contactOrder: "",
+  distressButton: "", distressDetails: "", ambulanceAuto: "",
+  // 7
+  openNotes: "",
+  // 8
+  familySignName: "", workerSignName: "", signDate: "",
+};
+
+/* ─── HELPERS ─── */
+const val = (v) => v || <span style={{ color: "#bbb", fontStyle: "italic", fontSize: 12 }}>—</span>;
+const yesNo = (v) => v === "yes" ? "כן" : v === "no" ? "לא" : v || "—";
+
+/* ─── FIELD + R — defined OUTSIDE main component so React never remounts them ─── */
+function R({ field, label, hint, type = "text", options }) {
+  const { form, upd } = useContext(FormCtx);
+  const value = form[field] ?? "";
+  return (
+    <div className="fg">
+      {label && <label>{label}</label>}
+      {hint && <div className="hint">{hint}</div>}
+      {type === "textarea" ? (
+        <textarea value={value} onChange={e => upd(field, e.target.value)} rows={3} />
+      ) : type === "radio" ? (
+        <div className="radios">
+          {options.map(o => (
+            <label key={o.v}>
+              <input type="radio" name={field} checked={value === o.v} onChange={() => upd(field, o.v)} />
+              {o.l}
+            </label>
+          ))}
+        </div>
+      ) : (
+        <input type={type} value={value} onChange={e => upd(field, e.target.value)} />
+      )}
+    </div>
+  );
+}
+
+/* ─── MAIN COMPONENT ─── */
+export default function CaregiverAgreement() {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [baseLang, setBaseLang] = useState("he");    // "he" | "en"
+  const [extraLang, setExtraLang] = useState("none"); // "none" | "en" | "uz" | "hi"
+  const [view, setView] = useState("form");
+  const [report, setReport] = useState(null);
+
+  const upd = (field, value) => setForm(f => ({ ...f, [field]: value }));
+  const updTask = (key, sub, value) => setForm(f => ({ ...f, tasks: { ...f.tasks, [key]: { ...f.tasks[key], [sub]: value } } }));
+  const updMeal = (key, value) => setForm(f => ({ ...f, meals: { ...f.meals, [key]: value } }));
+
+  /* translate payload to one language via API */
+  const translateTo = async (payload, langKey) => {
+    const langName = LANGS[langKey];
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        messages: [{
+          role: "user",
+          content: `You are a professional translator. Translate all Hebrew text values in the following JSON object into ${langName}.
+Rules:
+- Translate ONLY the "value", "label", "title", and "name" string fields
+- Keep the exact JSON structure
+- Do not translate keys
+- If a value is "—" or empty, keep it as is
+- Keep numbers, dates, times as is
+- Return ONLY the JSON, no preamble, no markdown code blocks
+- For yes/no values in Hebrew (כן/לא), translate to ${langName} equivalents
+
+JSON:
+${JSON.stringify(payload, null, 2)}`
+        }]
+      })
+    });
+    const data = await response.json();
+    const raw = data.content.map(c => c.text || "").join("");
+    const clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    return JSON.parse(clean);
+  };
+
+  const buildTranslationPayload = () => {
+    const d = form;
+    return {
+      title: "תיאום ציפיות — נספח לחוזה",
+      subtitle: "הסכם תיאום ציפיות בין משפחה לעובד/ת סיעוד",
+      sections: {
+        s0: {
+          title: "פרטים כלליים",
+          fields: {
+            patientName: { label: "שם המטופל/ת", value: d.patientName },
+            patientAge: { label: "גיל", value: d.patientAge },
+            workerName: { label: "שם העובד/ת", value: d.workerName },
+            workerOrigin: { label: "ארץ מוצא", value: d.workerOrigin },
+            agency: { label: "סוכנות / ממצע", value: d.agency },
+            startDate: { label: "תאריך תחילת עבודה", value: d.startDate },
+          }
+        },
+        s1: {
+          title: "היכרות הדדית",
+          fields: {
+            patientStory: { label: "מי המטופל/ת — סיפור אישי", value: d.patientStory },
+            patientImportant: { label: "מה חשוב לו/לה ביומיום", value: d.patientImportant },
+            patientMood: { label: "מה משמח / מרגיז אותו/אותה", value: d.patientMood },
+            workerBackground: { label: "רקע אישי של העובד/ת", value: d.workerBackground },
+            workerExpectations: { label: "ציפיות העובד/ת מהמשרה", value: d.workerExpectations },
+          }
+        },
+        s2: {
+          title: "מצב רפואי ותפקידי טיפול",
+          tasks: TASKS.map(t => ({
+            name: t.he,
+            included: d.tasks[t.key]?.included || "—",
+            notes: d.tasks[t.key]?.notes || "",
+          })),
+          notExpected: { label: "מה לא מצופה מהעובד/ת", value: d.notExpected },
+        },
+        s3: {
+          title: "סדר יום — ארוחות, בישול וקניות",
+          meals: MEALS.map(m => ({ name: m.he, time: d.meals[m.key] || "—" })),
+          fields: {
+            whoCooks: { label: "מי מבשל?", value: d.whoCooks },
+            workerCooksForSelf: { label: "האם העובד/ת מבשל/ת גם לעצמו/ה?", value: yesNo(d.workerCooksForSelf) },
+            forbiddenFood: { label: "מה אסור לבשל / להגיש למטופל?", value: d.forbiddenFood },
+            whoShops: { label: "מי עורך את הקניות?", value: d.whoShops },
+            shoppingPayment: { label: "אופן תשלום בקניות", value: d.shoppingPayment },
+            workerShopsAlone: { label: "האם העובד/ת יוצא לקנות לבד?", value: yesNo(d.workerShopsAlone) },
+            patientDuringShop: { label: "מה קורה עם המטופל/ת בזמן הקניות?", value: d.patientDuringShop },
+            receiptRequired: { label: "האם נדרשת קבלה / דיווח?", value: yesNo(d.receiptRequired) },
+          }
+        },
+        s3b: {
+          title: "השגחת לילה",
+          fields: {
+            nightWatch: { label: "האם נדרשת השגחה בלילה?", value: d.nightWatch },
+            minSleepHours: { label: "שעות שינה מינימליות מובטחות", value: d.minSleepHours },
+            sleepFrom: { label: "מהשעה", value: d.sleepFrom },
+            sleepTo: { label: "עד השעה", value: d.sleepTo },
+            nightReplacement: { label: "מי מחליף בלילות סוף שבוע?", value: d.nightReplacement },
+            nightCallMethod: { label: "כיצד מעירים את העובד/ת?", value: d.nightCallMethod },
+            nightCompensation: { label: "האם יש פיצוי על לילות עם קריאות?", value: yesNo(d.nightCompensation) },
+            nightCompDetails: { label: "פרטי הפיצוי", value: d.nightCompDetails },
+          }
+        },
+        s4: {
+          title: "כללי הבית",
+          fields: {
+            phonePolicy: { label: "מדיניות שימוש בטלפון נייד", value: d.phonePolicy },
+            phoneForbiddenWhen: { label: "מתי אסור להשתמש בטלפון?", value: d.phoneForbiddenWhen },
+            smoking: { label: "עישון", value: yesNo(d.smoking) },
+            smokingArea: { label: "אזור מותר לעישון", value: d.smokingArea },
+            guests: { label: "אירוח אורחים", value: d.guests },
+            kosher: { label: "כשרות / הנחיות דת בבית", value: yesNo(d.kosher) },
+            kosherDetails: { label: "פרטי כשרות", value: d.kosherDetails },
+          }
+        },
+        s5: {
+          title: "תנאי העסקה",
+          fields: {
+            salary: { label: "שכר חודשי", value: d.salary },
+            payDay: { label: "יום תשלום", value: d.payDay },
+            pocketMoney: { label: "דמי כיס שבועיים", value: d.pocketMoney },
+            restDay: { label: "יום מנוחה שבועי", value: d.restDay },
+            leaveNotice: { label: "הודעה מראש לחופשה (ימים)", value: d.leaveNotice },
+            leaveChannel: { label: "ערוץ הודעה על חופשה", value: d.leaveChannel },
+            sickNotice: { label: "נוהל הודעה על מחלה", value: d.sickNotice },
+            dailyRest: { label: "שעות מנוחה יומיות", value: d.dailyRest },
+            terminationLaw: { label: "הודעה מוקדמת לפי חוק", value: "עד 3 חודשים: שבוע | חודש 4–6: 14 יום | חודש 7–12: 21 יום | מעל שנה: חודש ימים" },
+            holidaysSelected: { label: "9 ימי חג — נבחרו?", value: yesNo(d.holidaysSelected) },
+          }
+        },
+        s6: {
+          title: "נוהלי חירום",
+          fields: {
+            fallProtocol: { label: "מה לעשות אם המטופל/ת נופל/ת?", value: d.fallProtocol },
+            refusalProtocol: { label: "מה לעשות אם המטופל/ת מסרב/ת לאכול / לתרופות?", value: d.refusalProtocol },
+            contactOrder: { label: "סדר עדיפויות — מי להתקשר ראשון?", value: d.contactOrder },
+            distressButton: { label: "לחצן מצוקה / שעון חכם", value: d.distressButton === "yes" ? "יש" : d.distressButton === "no" ? "אין" : "—" },
+            distressDetails: { label: "פרטי לחצן המצוקה", value: d.distressDetails },
+            ambulanceAuto: { label: "הזעקת אמבולנס", value: d.ambulanceAuto === "immediate" ? "כן — מיד, ללא תיאום" : d.ambulanceAuto === "coord" ? "כן — לאחר ניסיון יצירת קשר עם המשפחה" : d.ambulanceAuto === "family_first" ? "רק לאחר אישור המשפחה" : "—" },
+          }
+        },
+        s7: {
+          title: "הערות נוספות",
+          openNotes: { label: "הערות חופשיות", value: d.openNotes },
+        }
+      }
+    };
+  };
+
+  const generate = async () => {
+    setView("loading");
+    const payload = buildTranslationPayload();
+    try {
+      // Determine what needs translating
+      // Hebrew payload = payload (already Hebrew)
+      // Right column = Hebrew always (if he is involved), else English
+      // Left column = the non-Hebrew language
+
+      const needsTranslation = [];
+      if (baseLang === "en") needsTranslation.push("en");
+      if (extraLang !== "none") needsTranslation.push(extraLang);
+
+      const translations = {};
+      await Promise.all([...new Set(needsTranslation)].map(async l => {
+        translations[l] = await translateTo(payload, l);
+      }));
+
+      const getP = (l) => l === "he" ? payload : translations[l];
+
+      if (extraLang === "none") {
+        // Single language
+        setReport({ mode: "single", lang: baseLang, singlePayload: getP(baseLang) });
+      } else {
+        // Bilingual: Hebrew always RIGHT, other language always LEFT
+        // baseLang must be "he" when extraLang is set (English alone has no extra)
+        const rightLang = "he";
+        const leftLang = extraLang === "none" ? baseLang : extraLang;
+        // Special case: if baseLang=en and extraLang set → left=extraLang, right=en
+        const actualRight = baseLang === "he" ? "he" : baseLang;
+        const actualLeft  = baseLang === "he" ? extraLang : extraLang;
+        setReport({
+          mode: "pair",
+          leftLang: actualLeft, rightLang: actualRight,
+          leftPayload: getP(actualLeft), rightPayload: getP(actualRight),
+        });
+      }
+      setView("report");
+    } catch (e) {
+      alert("שגיאה בתרגום. נסה שוב.");
+      setView("form");
+    }
+  };
+
+  if (view === "loading") return (
+    <>
+      <style>{STYLE}</style>
+      <div className="loading">מתרגם ומייצר דוח...</div>
+    </>
+  );
+
+  if (view === "report") return <Report report={report} form={form} onBack={() => setView("form")} />;
+
+  return (
+    <FormCtx.Provider value={{ form, upd }}>
+    <>
+      <style>{STYLE}</style>
+      <div className="wrap print-hide">
+        <div className="main-title">תיאום ציפיות</div>
+        <div className="main-sub">נספח לחוזה — עובד/ת סיעוד</div>
+
+        {/* ── INTRO ── */}
+        <div style={{
+          border: "1.5px solid #ccc",
+          borderRadius: "10px",
+          padding: "28px 32px",
+          marginBottom: "48px",
+          background: "#fafafa",
+          lineHeight: "1.85",
+        }}>
+          <p style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#111" }}>
+            לפניכם סיכום תיאום הציפיות – הבסיס לשותפות מוצלחת.
+          </p>
+          <p style={{ fontSize: "13px", color: "#444" }}>
+            מסמך זה אינו רק סיכום טכני, אלא התשתית להצלחת הטיפול הסיעודי בביתכם. מטרתו היא לגשר על פערי הרגלים והשקפות עולם, למנוע אי-הבנות ולייצר סביבת עבודה נעימה. זהו הצעד הראשון בדרך לבניית אמון הדדי וליצירת שגרה יציבה ומותאמת אישית, המגדירה בבירור את המצב הרפואי, לוחות הזמנים וכללי הבית.
+          </p>
+        </div>
+
+        {/* ── LANG SELECTOR ── */}
+        {(() => {
+          const LNAME = { he:"עברית", en:"English", uz:"Oʻzbekcha", hi:"हिन्दी" };
+          const Chip = ({ val, selected, onClick, children }) => (
+            <button onClick={onClick} style={{
+              padding:"9px 20px", border:`1.5px solid ${selected?"#111":"#ddd"}`,
+              borderRadius:6, background: selected?"#111":"#fff",
+              color: selected?"#fff":"#333", fontSize:13, cursor:"pointer",
+              fontFamily:"inherit", fontWeight: selected?600:400, transition:"all 0.15s"
+            }}>{children || LNAME[val]}</button>
+          );
+          // Extra lang options depend on baseLang
+          const extraOpts = baseLang === "he"
+            ? [["none","ללא"],["en","English"],["uz","Oʻzbekcha"],["hi","हिन्दी"]]
+            : [["none","ללא"],["uz","Oʻzbekcha"],["hi","हिन्दी"]];
+
+          const previewLine = () => {
+            if (extraLang === "none") return `📄 דוח בשפה אחת: ${LNAME[baseLang]}`;
+            const lName = LNAME[extraLang];
+            return baseLang === "he"
+              ? `📄 עמודה ימין: עברית  |  עמודה שמאל: ${lName}`
+              : `📄 עמודה ימין: English  |  עמודה שמאל: ${lName}`;
+          };
+
+          return (
+            <div style={{ marginBottom:52, padding:"28px", border:"1px solid #ddd", borderRadius:8, background:"#fafafa" }}>
+              <div style={{ fontSize:13, fontWeight:700, marginBottom:22, color:"#111" }}>
+                באיזו שפה תרצו להפיק את הדוח?
+              </div>
+
+              {/* Step 1 — Base language */}
+              <div style={{ marginBottom:24 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:"#888", letterSpacing:1, marginBottom:10 }}>
+                  שפה ראשית
+                </div>
+                <div style={{ display:"flex", gap:10 }}>
+                  <Chip val="he" selected={baseLang==="he"} onClick={() => { setBaseLang("he"); setExtraLang("none"); }} />
+                  <Chip val="en" selected={baseLang==="en"} onClick={() => { setBaseLang("en"); setExtraLang("none"); }} />
+                </div>
+                <div style={{ fontSize:11, color:"#aaa", marginTop:8 }}>
+                  {baseLang==="he" ? "עברית תופיע תמיד בעמודה הימנית" : "English will appear on the right column"}
+                </div>
+              </div>
+
+              {/* Step 2 — Optional second language */}
+              <div>
+                <div style={{ fontSize:11, fontWeight:600, color:"#888", letterSpacing:1, marginBottom:10 }}>
+                  שפה נוספת (אופציונלי) — תופיע בעמודה השמאלית
+                </div>
+                <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+                  {extraOpts.map(([k,l]) => (
+                    <Chip key={k} val={k} selected={extraLang===k} onClick={() => setExtraLang(k)}>
+                      {l}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div style={{ marginTop:20, fontSize:12, color:"#555", borderTop:"1px solid #e8e8e8", paddingTop:14 }}>
+                {previewLine()}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── SEC 0 ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">01</span> פרטים כלליים</div>
+          <div className="grid2">
+            <R field="patientName" label="שם המטופל/ת" />
+            <R field="patientAge" label="גיל" />
+            <R field="workerName" label="שם העובד/ת" />
+            <R field="workerOrigin" label="ארץ מוצא" />
+            <R field="agency" label="תאגיד" />
+            <R field="startDate" label="תאריך תחילת עבודה" type="date" />
+          </div>
+        </div>
+
+        {/* ── SEC 1 ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">02</span> היכרות הדדית</div>
+          <R field="patientStory" label="מי המטופל/ת — קצת על האדם" hint="(לא רק המצב הרפואי — מה הוא/היא אוהב/ת, מה עבר/ה)" type="textarea" />
+          <R field="patientImportant" label="מה חשוב לו/לה ביומיום?" type="textarea" />
+          <R field="patientMood" label="מה משמח אותו/אותה? מה עלול להרגיז?" type="textarea" />
+          <R field="workerBackground" label="רקע אישי של העובד/ת (משפחה, ילדים, מצב)" type="textarea" />
+          <R field="workerExpectations" label="ציפיות העובד/ת מהמשרה ומהמשפחה" type="textarea" />
+        </div>
+
+        {/* ── SEC 2 ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">03</span> מצב רפואי ותפקידי טיפול</div>
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>תפקיד</th>
+                <th>כלול?</th>
+                <th>הערות / אופן ביצוע</th>
+              </tr>
+            </thead>
+            <tbody>
+              {TASKS.map(t => (
+                <tr key={t.key}>
+                  <td>{t.he}</td>
+                  <td>
+                    <select value={form.tasks[t.key]?.included || ""} onChange={e => updTask(t.key, "included", e.target.value)}>
+                      <option value="">—</option>
+                      <option value="yes">כן</option>
+                      <option value="no">לא</option>
+                      <option value="sometimes">לפי הצורך</option>
+                    </select>
+                  </td>
+                  <td><input type="text" value={form.tasks[t.key]?.notes || ""} onChange={e => updTask(t.key, "notes", e.target.value)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: 24 }}>
+            <R field="notExpected" label="מה אינו מצופה מהעובד/ת (חשוב למנוע אי-הבנות)" type="textarea" />
+          </div>
+        </div>
+
+        {/* ── SEC 3 — MEALS ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">04</span> סדר יום — ארוחות ובישול</div>
+          <table className="task-table">
+            <thead><tr><th>ארוחה</th><th>שעה</th></tr></thead>
+            <tbody>
+              {MEALS.map(m => (
+                <tr key={m.key}>
+                  <td>{m.he}</td>
+                  <td><input type="text" placeholder="לדוגמה: 08:00" value={form.meals[m.key]} onChange={e => updMeal(m.key, e.target.value)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: 24 }}>
+            <R field="whoCooks" label="מי אחראי על הבישול?" type="radio" options={[{ v: "worker", l: "העובד/ת" }, { v: "family", l: "בן/בת משפחה" }, { v: "both", l: "שניהם לסירוגין" }]} />
+            <R field="workerCooksForSelf" label="האם העובד/ת מבשל/ת גם לעצמו/ה?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }, { v: "coord", l: "בתיאום" }]} />
+            <R field="forbiddenFood" label="מה אסור לבשל / להגיש למטופל/ת?" type="textarea" />
+          </div>
+        </div>
+
+        {/* ── SEC 3B — SHOPPING ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">05</span> קניות</div>
+          <R field="whoShops" label="מי אחראי על הקניות?" type="radio" options={[{ v: "worker", l: "העובד/ת" }, { v: "family", l: "בן/בת משפחה" }, { v: "both", l: "שניהם" }]} />
+          <R field="shoppingPayment" label="אופן תשלום בקניות" type="radio" options={[{ v: "card", l: "כרטיס אשראי" }, { v: "cash", l: "מזומן" }, { v: "online", l: "הזמנה אונליין" }]} />
+          <R field="workerShopsAlone" label="האם העובד/ת יכול/ה לצאת לקנות לבד?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא — רק עם ליווי" }]} />
+          <R field="patientDuringShop" label="מה קורה עם המטופל/ת בזמן הקניות?" type="radio" options={[{ v: "family", l: "נשאר/ת עם בן/בת משפחה" }, { v: "comes", l: "מגיע/ה יחד לקניות" }]} />
+          <R field="receiptRequired" label="האם נדרשת קבלה / דיווח?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }]} />
+        </div>
+
+        {/* ── SEC 3C — NIGHT ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">06</span> השגחת לילה</div>
+          <R field="nightWatch" label="האם נדרשת השגחה בלילה?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }, { v: "sometimes", l: "מצבית — לפי הצורך" }]} />
+          {form.nightWatch !== "no" && <>
+            <div className="alert">
+              <p><strong>הצהרת העובד/ת:</strong> ידוע לי כי ייתכנו קריאות לילה ועלי להגיב אליהן. אני מבין/ה שזה חלק מהתפקיד.</p>
+              <p><strong>התחייבות המשפחה:</strong> אנו מתחייבים לעשות כל שביכולתנו לאפשר לעובד/ת שעות מנוחה רציפות, ולסדיר חלופה בלילות שבהם הדבר אפשרי.</p>
+            </div>
+            <div className="grid3">
+              <R field="minSleepHours" label="שעות שינה מינימליות מובטחות" />
+              <R field="sleepFrom" label="מהשעה" />
+              <R field="sleepTo" label="עד השעה" />
+            </div>
+            <R field="nightReplacement" label="מי מחליף בלילות סוף שבוע?" />
+            <R field="nightCallMethod" label="כיצד מעירים את העובד/ת?" type="radio" options={[{ v: "intercom", l: "אינטרקום" }, { v: "knock", l: "דפיקה" }, { v: "phone", l: "טלפון" }]} />
+            <R field="nightCompensation" label="האם יש פיצוי על לילות עם קריאות?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }]} />
+            {form.nightCompensation === "yes" && <R field="nightCompDetails" label="פרטי הפיצוי" />}
+          </>}
+        </div>
+
+        {/* ── SEC 4 — HOUSE RULES ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">07</span> כללי הבית</div>
+          <R field="phonePolicy" label="מדיניות שימוש בטלפון נייד" type="radio" options={[{ v: "rest", l: "מותר בזמן מנוחת המטופל/ת" }, { v: "free", l: "מותר בחופשיות" }, { v: "restricted", l: "מוגבל — ראה הערות" }]} />
+          <R field="phoneForbiddenWhen" label="מתי אסור בהחלט להשתמש בטלפון?" hint="(מקלחת, ארוחות, הליכה בחוץ, מתן תרופות...)" type="textarea" />
+          <R field="smoking" label="עישון" type="radio" options={[{ v: "yes", l: "מותר" }, { v: "no", l: "אסור לחלוטין" }, { v: "outside", l: "מחוץ לבית בלבד" }]} />
+          {form.smoking === "yes" || form.smoking === "outside" ? <R field="smokingArea" label="אזור מותר לעישון" /> : null}
+          <R field="guests" label="אירוח חברים / משפחה של העובד/ת" type="radio" options={[{ v: "yes", l: "מותר" }, { v: "no", l: "אסור" }, { v: "coord", l: "בתיאום מראש" }]} />
+          <R field="kosher" label="האם יש כשרות / הנחיות דת בבית?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }]} />
+          {form.kosher === "yes" && <R field="kosherDetails" label="פרטי כשרות (הפרדת כלים, מוצרים אסורים)" type="textarea" />}
+
+          <div style={{ marginTop: 32 }}>
+            <div className="alert">
+              <p>⚠️ <strong>איסור מוחלט — השארת המטופל/ת ללא השגחה</strong></p>
+              <p>אסור בהחלט לעזוב את המטופל/ת ללא השגחה בכל שעה ביום ובלילה. כל יציאה מהבית מחייבת תיאום מראש עם בני המשפחה. לא ניתן לעזוב אלא אם יש אדם אחר בבית שקיבל על עצמו את האחריות. הפרת סעיף זה עלולה להוות עילה לסיום העסקה מיידי.</p>
+            </div>
+            <div className="ack-row">
+              <input type="checkbox" checked={form.abandonmentAck} onChange={e => upd("abandonmentAck", e.target.checked)} />
+              <span>קראתי והבנתי את האיסור המוחלט לעזוב את המטופל/ת ללא השגחה, ואני מסכים/ה לפעול על פיו.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SEC 5 — EMPLOYMENT ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">08</span> תנאי העסקה</div>
+          <div className="grid2">
+            <R field="salary" label="שכר חודשי" />
+            <R field="payDay" label="יום תשלום בחודש" />
+            <R field="restDay" label="יום מנוחה שבועי" />
+            <R field="dailyRest" label="שעות מנוחה יומיות" />
+            <R field="sickNotice" label="נוהל הודעה על מחלה" />
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <R field="pocketMoneyType" label="דמי כיס שבועיים — אופן תשלום"
+              type="radio" options={[
+                { v: "advance", l: "מפרעה על חשבון השכר" },
+                { v: "extra",   l: "נוסף על הבסיס" },
+              ]} />
+            <R field="pocketMoney" label="סכום דמי כיס שבועיים" />
+          </div>
+
+          {/* חופשה שנתית */}
+          <div style={{ marginTop: 24 }}>
+            <div className="alert">
+              <p><strong>חופשה שנתית:</strong> מספר ימי החופשה המדויק ייקבע בהתאם לחוק, ובדרך כלל אינו ידוע מראש בתחילת ההעסקה. על שני הצדדים לתאם כל חופשה מראש כדי לאפשר הכנת מחליף/ה מתאים/ה.</p>
+            </div>
+            <R field="leaveNotice" label="הודעה מראש לחופשה — כמה ימים לפחות?" hint="חופשה שלא תואמה מראש לא תאושר אוטומטית. על המשפחה להיערך עם מחליף/ה." />
+            <R field="leaveChannel" label="ערוץ הודעה על חופשה" type="radio" options={[{ v: "phone", l: "טלפון" }, { v: "whatsapp", l: "וואטסאפ" }, { v: "other", l: "אחר" }]} />
+          </div>
+
+          {/* הודעה מוקדמת לפי חוק */}
+          <div style={{ marginTop: 32 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 12 }}>הודעה מוקדמת לפני סיום העסקה — לפי חוק</label>
+            <div className="alert">
+              <p style={{ marginBottom: 12 }}><strong>תקופות ההודעה המוקדמת הקבועות בחוק:</strong></p>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #ddd" }}>
+                    <th style={{ textAlign: "right", padding: "6px 8px", fontWeight: 600, color: "#444" }}>תקופת עבודה</th>
+                    <th style={{ textAlign: "right", padding: "6px 8px", fontWeight: 600, color: "#444" }}>הודעה מוקדמת</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["עד 3 חודשים", "שבוע ימים"],
+                    ["חודש 4 עד סוף חודש 6", "14 יום"],
+                    ["חודש 7 עד סוף השנה הראשונה", "21 יום"],
+                    ["מעל שנת עבודה", "חודש ימים"],
+                  ].map(([period, notice]) => (
+                    <tr key={period} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <td style={{ padding: "7px 8px" }}>{period}</td>
+                      <td style={{ padding: "7px 8px", fontWeight: 500 }}>{notice}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ marginTop: 14, fontSize: 12, color: "#555", lineHeight: 1.7 }}>
+                <strong>הודעה בכתב:</strong> החוק מחייב את העובד/ת למסור הודעה מוקדמת בכתב.<br />
+                <strong>דגש לסיעוד:</strong> אי-מתן הודעה כחוק בתחום הסיעוד — שבו קיימת תלות ישירה של המטופל/ת — עלול להוביל להשלכות משמעותיות על העובד/ת, לרבות הרחקה מישראל.
+              </p>
+            </div>
+            <div className="ack-row">
+              <input type="checkbox" checked={form.terminationAck || false} onChange={e => upd("terminationAck", e.target.checked)} />
+              <span>קראתי והבנתי את חובת ההודעה המוקדמת לפי חוק, ואני מתחייב/ת לפעול על פיה.</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 32 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 12 }}>9 ימי חג קבועים</label>
+            <R field="holidaysSelected" label="האם נבחרו 9 ימי החג לתקופת ההעסקה?" type="radio" options={[{ v: "yes", l: "כן" }, { v: "no", l: "לא" }]} />
+            <div className="ack-row">
+              <input type="checkbox" checked={form.holidaysAck} onChange={e => upd("holidaysAck", e.target.checked)} />
+              <span>ידוע לי כי 9 ימי החג שנבחרו ייקבעו מראש ויישארו קבועים לאורך כל תקופת ההעסקה ולא ניתן יהיה להחליפם.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SEC 6 — EMERGENCY ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">09</span> נוהלי חירום</div>
+          <R field="fallProtocol" label="מה לעשות אם המטופל/ת נופל/ת?" type="textarea" />
+          <R field="refusalProtocol" label="מה לעשות אם המטופל/ת מסרב/ת לאכול / לקחת תרופות?" type="textarea" />
+          <R field="contactOrder" label="סדר עדיפויות — מי להתקשר ראשון?" hint="(שם + מספר טלפון)" type="textarea" />
+
+          {/* לחצן מצוקה */}
+          <R field="distressButton" label="לחצן מצוקה / שעון חכם" type="radio"
+            options={[{ v: "yes", l: "יש — המטופל/ת מצויד/ת בלחצן" }, { v: "no", l: "אין" }]} />
+          {form.distressButton === "yes" && (
+            <R field="distressDetails" label="פרטי לחצן המצוקה — איך הוא עובד?" hint="(לאן מועברת ההתרעה? מה על העובד/ת לעשות לאחר שהופעל?)" type="textarea" />
+          )}
+
+          {/* אמבולנס */}
+          <R field="ambulanceAuto" label="האם העובד/ת רשאי/ת להזעיק אמבולנס (מד״א)?"
+            type="radio" options={[
+              { v: "immediate", l: "כן — מיד, בכל מצב סכנת חיים, ללא תיאום מראש" },
+              { v: "coord", l: "כן — אך יש לנסות ליצור קשר עם בן/בת משפחה תחילה" },
+              { v: "family_first", l: "רק לאחר אישור בן/בת משפחה, אלא אם אין אפשרות לדבר" },
+            ]} />
+          {form.ambulanceAuto && (
+            <div className="alert" style={{ marginTop: 8 }}>
+              <p style={{ fontSize: 12 }}>
+                {form.ambulanceAuto === "immediate" && "✓ העובד/ת מוסמך/ת להזעיק אמבולנס באופן עצמאי מיידי בכל מצב חירום."}
+                {form.ambulanceAuto === "coord" && "✓ במצב חירום — לנסות להתקשר לבן/בת המשפחה, ואם לא זמינים — להזעיק אמבולנס באופן עצמאי."}
+                {form.ambulanceAuto === "family_first" && "✓ יש לפנות תמיד לבן/בת המשפחה תחילה. רק אם אין מענה ומצב החירום מחייב — להזעיק לבד."}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── SEC 7 — OPEN NOTES ── */}
+        <div className="sec">
+          <div className="sec-title"><span className="sec-num">10</span> הערות נוספות</div>
+          <R field="openNotes" label="כל דבר שלא כוסה בטופס — הערות חופשיות" hint="ניתן לרשום כאן כל הסכמה, נוהל, או דגש שחשוב לשני הצדדים" type="textarea" />
+          <textarea placeholder="שדה פתוח נוסף..." value={form.openNotes} onChange={e => upd("openNotes", e.target.value)} rows={4} style={{ marginTop: 8 }} />
+        </div>
+
+        {/* ── GENERATE ── */}
+        <div style={{ borderTop: "1.5px solid #111", paddingTop: 36, marginTop: 8 }}>
+          <p style={{ fontSize: 13, color: "#555", marginBottom: 20 }}>
+            {{ he:"עברית", en:"English", uz:"Oʻzbekcha", hi:"हिन्दी" }[baseLang]}
+            {extraLang !== "none" && ` ↔ ${{ en:"English", uz:"Oʻzbekcha", hi:"हिन्दी" }[extraLang]}`}
+          </p>
+          <button className="btn" onClick={generate}>הפק דוח ו-PDF ←</button>
+        </div>
+      </div>
+    </>
+    </FormCtx.Provider>
+  );
+}
+
+/* ─── REPORT VIEW ─── */
+
+const ABANDONMENT = {
+  he: "אסור בהחלט לעזוב את המטופל/ת ללא השגחה. כל יציאה מחייבת תיאום עם המשפחה ונוכחות אדם אחר שקיבל על עצמו אחריות. הפרה עלולה להוות עילה לסיום מיידי.",
+  en: "It is strictly forbidden to leave the patient unattended. Any departure requires coordination with the family and the presence of another responsible person. Violation may result in immediate termination.",
+  uz: "Bemorni nazoratisiz qoldirish mutlaqo taqiqlanadi. Har qanday chiqish oila bilan muvofiqlashtirilishi kerak. Qoidabuzarlik ishdan darhol bo'shatishga olib kelishi mumkin.",
+  hi: "मरीज को बिना निगरानी के अकेला छोड़ना सख्त मना है। कोई भी बाहर जाना परिवार से समन्वय के बाद ही संभव है। उल्लंघन पर तत्काल बर्खास्तगी हो सकती है।",
+};
+const HOLIDAYS = {
+  he: "ידוע לי כי 9 ימי החג שנבחרו ייקבעו מראש ויישארו קבועים לאורך כל תקופת ההעסקה ולא ניתן יהיה להחליפם.",
+  en: "I understand that the 9 selected holidays are fixed for the entire employment period and cannot be changed.",
+  uz: "9 ta tanlangan bayram kuni butun ish muddati davomida o'zgarmas bo'lib qolishini bilaman.",
+  hi: "मुझे पता है कि 9 चुनी हुई छुट्टियाँ पूरे रोजगार काल में तय रहेंगी और बदली नहीं जा सकतीं।",
+};
+const TERMINATION_ROWS = {
+  he: [["עד 3 חודשים","שבוע ימים"],["חודש 4–6","14 יום"],["חודש 7–12","21 יום"],["מעל שנה","חודש ימים"]],
+  en: [["Up to 3 months","1 week"],["Month 4–6","14 days"],["Month 7–12","21 days"],["Over 1 year","1 month"]],
+  uz: [["3 oygacha","1 hafta"],["4–6-oy","14 kun"],["7–12-oy","21 kun"],["1 yildan ko'p","1 oy"]],
+  hi: [["3 महीने तक","1 सप्ताह"],["4–6 महीना","14 दिन"],["7–12 महीना","21 दिन"],["1 साल से ज्यादा","1 महीना"]],
+};
+const TERMINATION_NOTE = {
+  he: "ההודעה חייבת להינתן בכתב. בתחום הסיעוד, אי-מתן הודעה כחוק עלול להוביל להרחקה מישראל.",
+  en: "Notice must be given in writing. In caregiving, failure to provide legal notice may result in removal from Israel.",
+  uz: "Xabar yozma shaklda berilishi shart. Parvarish sohasida qonuniy xabar bermaslik Isroildan deportatsiyaga olib kelishi mumkin.",
+  hi: "नोटिस लिखित में देना जरूरी है। देखभाल क्षेत्र में कानूनी नोटिस न देने पर इजराइल से निर्वासन हो सकता है।",
+};
+const WORKER_LABELS = { he:"עובד/ת", en:"Worker / Employee", uz:"Ishchi", hi:"कर्मचारी" };
+const NIGHT_WORKER = {
+  he: "ידוע לי כי ייתכנו קריאות לילה ועלי להגיב אליהן. אני מבין/ה שזה חלק מהתפקיד.",
+  en: "I understand that night calls may occur and I must respond. I understand this is part of the job.",
+  uz: "Tunda chaqiruvlar bo'lishi mumkinligini va ularga javob berishim kerakligini bilaman.",
+  hi: "मुझे पता है रात में बुलावा आ सकता है और मुझे जवाब देना होगा। यह काम का हिस्सा है।",
+};
+const NIGHT_FAMILY = {
+  he: "אנו מתחייבים לעשות כל שביכולתנו לאפשר לעובד/ת שעות מנוחה רציפות ולסדיר חלופה בלילות שבהם הדבר אפשרי.",
+  en: "We commit to doing everything possible to ensure continuous rest hours for the worker, and to arrange a replacement on nights when possible.",
+  uz: "Ishchiga uzluksiz dam olish soatlarini ta'minlash va imkon bo'lganda almashtirishni tashkil etish uchun barcha imkoniyatlardan foydalanamiz.",
+  hi: "हम वचन देते हैं कि कर्मचारी को लगातार आराम के घंटे देने और जब संभव हो रात में विकल्प की व्यवस्था करने की पूरी कोशिश करेंगे।",
+};
+
+/* Render one bilingual column-pair document */
+function BiLangDocument({ leftPayload, rightPayload, leftLang, rightLang, leftLabel, rightLabel, form, showSig }) {
+  const ls = leftPayload.sections;
+  const rs = rightPayload.sections;
+
+  const Dash = () => <span style={{ color:"#bbb", fontStyle:"italic", fontSize:12 }}>—</span>;
+
+  const BiRow = ({ lLabel, lVal, rLabel, rVal }) => (
+    <div className="bi-row">
+      <div className={leftLang === "he" ? "bi-he" : "bi-tr"} style={{ direction: leftLang === "he" ? "rtl" : "ltr" }}>
+        <div className="bi-lbl">{lLabel}</div>
+        <div className="bi-val">{lVal || <Dash />}</div>
+      </div>
+      <div className={rightLang === "he" ? "bi-he" : "bi-tr"} style={{ direction: rightLang === "he" ? "rtl" : "ltr", textAlign: rightLang === "he" ? "right" : "left" }}>
+        <div className="bi-lbl">{rLabel}</div>
+        <div className="bi-val">{rVal || <Dash />}</div>
+      </div>
+    </div>
+  );
+
+  const ColHeaders = ({ lTitle, rTitle }) => (
+    <>
+      <div className="rpt-sec-title">
+        <span style={{ marginLeft:16 }}>{lTitle}</span>
+        <span style={{ direction:"ltr", float:"left" }}>{rTitle}</span>
+      </div>
+      <div className="bi-row" style={{ borderBottom:"1px solid #ddd", marginBottom:12, paddingBottom:8 }}>
+        <div className="col-hdr">{leftLabel}</div>
+        <div className="col-hdr ltr">{rightLabel}</div>
+      </div>
+    </>
+  );
+
+  const renderSec = (lS, rS) => {
+    if (!lS || !rS) return null;
+    return (
+      <div className="rpt-sec">
+        <ColHeaders lTitle={lS.title} rTitle={rS.title} />
+        {lS.fields && Object.keys(lS.fields).map(k => (
+          <BiRow key={k} lLabel={lS.fields[k]?.label} lVal={lS.fields[k]?.value}
+            rLabel={rS.fields?.[k]?.label} rVal={rS.fields?.[k]?.value} />
+        ))}
+        {lS.meals && lS.meals.map((m, i) => (
+          <BiRow key={i} lLabel={m.name} lVal={m.time}
+            rLabel={rs.s3?.meals?.[i]?.name || rS.meals?.[i]?.name} rVal={rs.s3?.meals?.[i]?.time || rS.meals?.[i]?.time} />
+        ))}
+        {lS.tasks && lS.tasks.map((t, i) => (
+          <BiRow key={i}
+            lLabel={t.name}
+            lVal={`${t.included==="yes"?"כן":t.included==="no"?"לא":t.included}${t.notes?" — "+t.notes:""}`}
+            rLabel={rS.tasks?.[i]?.name}
+            rVal={`${rS.tasks?.[i]?.included||""}${rS.tasks?.[i]?.notes?" — "+rS.tasks[i].notes:""}`}
+          />
+        ))}
+        {lS.openNotes && <BiRow lLabel={lS.openNotes.label} lVal={lS.openNotes.value}
+          rLabel={rS.openNotes?.label} rVal={rS.openNotes?.value} />}
+      </div>
+    );
+  };
+
+  const termRows = (lang) => (TERMINATION_ROWS[lang] || TERMINATION_ROWS.en).map(([p,n],i) => (
+    <tr key={i} style={{ borderBottom:"1px solid #f0f0f0" }}>
+      <td style={{ padding:"5px 0", color:"#555" }}>{p}</td>
+      <td style={{ padding:"5px 0", fontWeight:600 }}>{n}</td>
+    </tr>
+  ));
+
+  return (
+    <>
+      {renderSec(ls.s0, rs.s0)}
+      {renderSec(ls.s1, rs.s1)}
+      {renderSec(ls.s2, rs.s2)}
+      {renderSec(ls.s3, rs.s3)}
+      {renderSec(ls.s3b, rs.s3b)}
+      {renderSec(ls.s4, rs.s4)}
+      {renderSec(ls.s5, rs.s5)}
+      {renderSec(ls.s6, rs.s6)}
+      {renderSec(ls.s7, rs.s7)}
+
+      {/* Abandonment clause */}
+      <div className="rpt-sec">
+        <ColHeaders lTitle="סעיף מחייב — השארת המטופל/ת ללא השגחה" rTitle="⚠" />
+        <BiRow lLabel="" lVal={ABANDONMENT[leftLang]} rLabel="" rVal={ABANDONMENT[rightLang]} />
+      </div>
+
+      {/* Night watch */}
+      {form.nightWatch !== "no" && (
+        <div className="rpt-sec">
+          <ColHeaders lTitle="הסכמה הדדית — השגחת לילה" rTitle="Night Watch Agreement" />
+          <BiRow lLabel="העובד/ת" lVal={NIGHT_WORKER[leftLang]}
+            rLabel={WORKER_LABELS[rightLang]} rVal={NIGHT_WORKER[rightLang]} />
+          <BiRow lLabel="המשפחה" lVal={NIGHT_FAMILY[leftLang]}
+            rLabel="Family" rVal={NIGHT_FAMILY[rightLang]} />
+        </div>
+      )}
+
+      {/* Holidays */}
+      <div className="rpt-sec">
+        <ColHeaders lTitle="9 ימי חג קבועים" rTitle="9 Fixed Holidays" />
+        <BiRow lLabel="" lVal={(form.holidaysAck?"✓ ":"")+HOLIDAYS[leftLang]}
+          rLabel="" rVal={(form.holidaysAck?"✓ ":"")+HOLIDAYS[rightLang]} />
+      </div>
+
+      {/* Termination */}
+      <div className="rpt-sec">
+        <ColHeaders lTitle="הודעה מוקדמת לפי חוק" rTitle="Notice Period by Law" />
+        <div className="bi-row">
+          <div style={{ direction: leftLang==="he"?"rtl":"ltr" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}><tbody>{termRows(leftLang)}</tbody></table>
+            <p style={{ fontSize:11, color:"#777", marginTop:8, lineHeight:1.6 }}>{TERMINATION_NOTE[leftLang]}</p>
+            <div style={{ fontSize:12, marginTop:6 }}>
+              {leftLang==="he" ? `אישור העובד/ת: ${form.terminationAck?"✓ מאשר/ת":"טרם אושר"}` : ""}
+            </div>
+          </div>
+          <div style={{ direction: rightLang==="he"?"rtl":"ltr", textAlign: rightLang==="he"?"right":"left" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}><tbody>{termRows(rightLang)}</tbody></table>
+            <p style={{ fontSize:11, color:"#777", marginTop:8, lineHeight:1.6 }}>{TERMINATION_NOTE[rightLang]}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Signature */}
+      {showSig && (
+        <div className="rpt-sec" style={{ marginTop:48 }}>
+          <div className="rpt-sec-title">חתימות / Signatures</div>
+          <div className="sig-wrap">
+            <div className="sig-box">
+              <div className="sig-box-title">המשפחה</div>
+              <div style={{ fontSize:12, color:"#555", marginBottom:4 }}>שם: {form.familySignName||"___________________"}</div>
+              <div className="sig-line" /><div className="sig-label">חתימה</div>
+              <div style={{ marginTop:16, fontSize:12, color:"#555" }}>תאריך: {form.signDate||"___________________"}</div>
+            </div>
+            <div className="sig-box" style={{ direction:"ltr", textAlign:"left" }}>
+              <div className="sig-box-title">{WORKER_LABELS[rightLang]}</div>
+              <div style={{ fontSize:12, color:"#555", marginBottom:4 }}>Name: {form.workerSignName||"___________________"}</div>
+              <div className="sig-line" /><div className="sig-label">Signature</div>
+              <div style={{ marginTop:16, fontSize:12, color:"#555" }}>Date: {form.signDate||"___________________"}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+const INTRO_TEXT = {
+  he: { title: "לפניכם סיכום תיאום הציפיות – הבסיס לשותפות מוצלחת.", body: "מסמך זה אינו רק סיכום טכני, אלא התשתית להצלחת הטיפול הסיעודי בביתכם. מטרתו לגשר על פערי הרגלים והשקפות עולם, למנוע אי-הבנות ולייצר סביבת עבודה נעימה. זהו הצעד הראשון לבניית אמון הדדי ושגרה יציבה ומותאמת אישית." },
+  en: { title: "Expectations Agreement — The Foundation of a Successful Partnership.", body: "This document is not merely a technical summary, but the foundation for successful caregiving in your home. Its purpose is to bridge cultural gaps, prevent misunderstandings, and create a pleasant work environment." },
+  uz: { title: "Kutishlarni muvofiqlashtirish — Muvaffaqiyatli hamkorlik asosi.", body: "Ushbu hujjat texnik xulosa emas, balki sizning uyingizda muvaffaqiyatli parvarish asosi hisoblanadi." },
+  hi: { title: "अपेक्षाओं का समझौता — सफल साझेदारी की नींव।", body: "यह दस्तावेज़ केवल तकनीकी सारांश नहीं है, बल्कि आपके घर में सफल देखभाल की नींव है।" },
+};
+
+function ReportIntro({ leftLang, rightLang }) {
+  const L = INTRO_TEXT[leftLang] || INTRO_TEXT.he;
+  const R = INTRO_TEXT[rightLang] || INTRO_TEXT.en;
+  return (
+    <div style={{ border:"1.5px solid #ccc", borderRadius:10, padding:"22px 26px", marginBottom:36, background:"#fafafa", lineHeight:1.8, pageBreakInside:"avoid" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
+        <div style={{ direction: leftLang==="he"?"rtl":"ltr" }}>
+          <p style={{ fontSize:13, fontWeight:600, marginBottom:8, color:"#111" }}>{L.title}</p>
+          <p style={{ fontSize:12, color:"#444" }}>{L.body}</p>
+        </div>
+        <div style={{ direction: rightLang==="he"?"rtl":"ltr", textAlign: rightLang==="he"?"right":"left" }}>
+          <p style={{ fontSize:13, fontWeight:600, marginBottom:8, color:"#111" }}>{R.title}</p>
+          <p style={{ fontSize:12, color:"#444" }}>{R.body}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Report({ report, form, onBack }) {
+  const { mode, lang, singlePayload, leftLang, rightLang, leftPayload, rightPayload } = report;
+  const LNAME = { he:"עברית", en:"English", uz:"Oʻzbekcha", hi:"हिन्दी" };
+  const DATE = form.startDate || new Date().toLocaleDateString("he-IL");
+  const META = `מטופל/ת: ${form.patientName||"—"} | עובד/ת: ${form.workerName||"—"} | ${DATE}`;
+  const isHe = (l) => l === "he";
+
+  const SingleSection = ({ sec, l }) => {
+    if (!sec) return null;
+    return (
+      <div className="rpt-sec" style={{ direction: isHe(l)?"rtl":"ltr" }}>
+        <div className="rpt-sec-title">{sec.title}</div>
+        {sec.fields && Object.entries(sec.fields).map(([f,fld]) => (
+          <div key={f} style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid #f5f5f5" }}>
+            <div style={{ fontSize:10, color:"#999" }}>{fld.label}</div>
+            <div style={{ fontSize:13 }}>{fld.value||"—"}</div>
+          </div>
+        ))}
+        {sec.tasks && sec.tasks.map((t,i) => (
+          <div key={i} style={{ marginBottom:10, paddingBottom:10, borderBottom:"1px solid #f5f5f5" }}>
+            <div style={{ fontSize:10, color:"#999" }}>{t.name}</div>
+            <div style={{ fontSize:13 }}>{t.included}{t.notes?" — "+t.notes:""}</div>
+          </div>
+        ))}
+        {sec.meals && sec.meals.map((m,i) => (
+          <div key={i} style={{ marginBottom:10, paddingBottom:10, borderBottom:"1px solid #f5f5f5" }}>
+            <div style={{ fontSize:10, color:"#999" }}>{m.name}</div>
+            <div style={{ fontSize:13 }}>{m.time||"—"}</div>
+          </div>
+        ))}
+        {sec.openNotes && (
+          <div style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid #f5f5f5" }}>
+            <div style={{ fontSize:10, color:"#999" }}>{sec.openNotes.label}</div>
+            <div style={{ fontSize:13 }}>{sec.openNotes.value||"—"}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <style>{STYLE}</style>
+      <div className="rpt">
+        <div className="no-print" style={{ display:"flex", gap:12, marginBottom:40, alignItems:"center", flexWrap:"wrap" }}>
+          <button className="btn" onClick={() => window.print()}>🖨 הדפס / שמור PDF</button>
+          <button className="btn-out" onClick={onBack}>← חזרה לעריכה</button>
+          <span style={{ fontSize:12, color:"#888", lineHeight:1.5 }}>
+            פתח את הקובץ שהורד בדפדפן ← Ctrl+P / ⌘+P להדפסה / שמירה כ-PDF
+          </span>
+        </div>
+
+        <div className="rpt-hdr">
+          <div className="rpt-hdr-title">תיאום ציפיות — נספח לחוזה</div>
+          {mode === "pair" && (
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#888", marginTop:6 }}>
+              <span style={{ direction:"ltr" }}>{LNAME[leftLang]}</span>
+              <span>↔</span>
+              <span>{LNAME[rightLang]}</span>
+            </div>
+          )}
+          <div className="rpt-meta"><span>{META}</span></div>
+        </div>
+
+        {mode === "pair" ? (
+          <>
+            <ReportIntro leftLang={leftLang} rightLang={rightLang} />
+            <BiLangDocument
+              leftPayload={leftPayload} rightPayload={rightPayload}
+              leftLang={leftLang} rightLang={rightLang}
+              leftLabel={LNAME[leftLang]} rightLabel={LNAME[rightLang]}
+              form={form} showSig={true}
+            />
+          </>
+        ) : (
+          <>
+            <div style={{
+              border:"1.5px solid #ccc", borderRadius:10, padding:"22px 26px",
+              marginBottom:36, background:"#fafafa", lineHeight:1.8,
+              direction: isHe(lang)?"rtl":"ltr"
+            }}>
+              <p style={{ fontSize:13, fontWeight:600, marginBottom:8 }}>{INTRO_TEXT[lang]?.title}</p>
+              <p style={{ fontSize:12, color:"#444" }}>{INTRO_TEXT[lang]?.body}</p>
+            </div>
+            {Object.entries(singlePayload.sections).map(([k,sec]) => (
+              <SingleSection key={k} sec={sec} l={lang} />
+            ))}
+            <div className="rpt-sec" style={{ marginTop:48, direction: isHe(lang)?"rtl":"ltr" }}>
+              <div className="rpt-sec-title">{isHe(lang)?"חתימות":"Signatures"}</div>
+              <div className="sig-wrap">
+                <div className="sig-box">
+                  <div className="sig-box-title">{isHe(lang)?"המשפחה":"Family"}</div>
+                  <div style={{ fontSize:12, marginBottom:4 }}>{isHe(lang)?"שם:":"Name:"} {form.familySignName||"___________________"}</div>
+                  <div className="sig-line" /><div className="sig-label">{isHe(lang)?"חתימה":"Signature"}</div>
+                  <div style={{ marginTop:16, fontSize:12 }}>{isHe(lang)?"תאריך:":"Date:"} {form.signDate||"___________________"}</div>
+                </div>
+                <div className="sig-box">
+                  <div className="sig-box-title">{WORKER_LABELS[lang]||"עובד/ת"}</div>
+                  <div style={{ fontSize:12, marginBottom:4 }}>{isHe(lang)?"שם:":"Name:"} {form.workerSignName||"___________________"}</div>
+                  <div className="sig-line" /><div className="sig-label">{isHe(lang)?"חתימה":"Signature"}</div>
+                  <div style={{ marginTop:16, fontSize:12 }}>{isHe(lang)?"תאריך:":"Date:"} {form.signDate||"___________________"}</div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div style={{ textAlign:"center", fontSize:10, color:"#bbb", marginTop:40, paddingTop:16, borderTop:"1px solid #eee" }}>
+          תיאום ציפיות — נספח לחוזה &nbsp;|&nbsp; Expectations Agreement — Contract Addendum
+        </div>
+      </div>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(CaregiverAgreement));
+  </script>
+</body>
+</html>
